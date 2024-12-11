@@ -1,5 +1,5 @@
 param ($year = 2024, $day = 08)
-$downloadToPath = "./{0:00}.in.test" -f ($day)
+$downloadToPath = "./{0:00}.in" -f ($day)
 $remoteFileLocation = "https://adventofcode.com/$year/day/$day/input"
 
 $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
