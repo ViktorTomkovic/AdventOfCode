@@ -1,0 +1,7 @@
+*.in*
+*.png
+*output*
+*.out
+*.dot
+*.svg
+

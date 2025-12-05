@@ -1,7 +1,7 @@
 //import * as _pq  from 'npm:@datastructures-js/priority-queue@5.4.0';
 //import { Deque } from 'npm:@datastructures-js/deque@1.0.4';
 import { Deque } from "@datastructures-js/deque";
-import { GeneralMap } from "./generalMap.ts";
+import { GeneralMap, GeneralMapHashFn } from "./generalMap.ts";
 const inputName = Deno.args[0] ?? "21.in";
 const text = Deno.readTextFileSync(inputName);
 let lines = text.split(/\r?\n/);
@@ -84,15 +84,6 @@ const keypad2KeyToChar = (key: Keypad2Key): string => {
 };
 const keypad1VertexToHash = (key: Keypad1Vertex): number => key;
 const keypad2VertexToHash = (key: Keypad2Vertex): number => key;
-class GeneralMapHashFn<TKey, TValue, THash>
-  extends GeneralMap<TKey, TValue, THash> {
-  constructor(private hashFunction: (key: TKey) => THash) {
-    super();
-  }
-  override keyToHash(element: TKey): THash {
-    return this.hashFunction(element);
-  }
-}
 interface IFromToEdge<TVertex> {
   from: TVertex;
   to: TVertex;
