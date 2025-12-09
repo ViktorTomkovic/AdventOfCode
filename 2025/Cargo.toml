@@ -1,6 +1,8 @@
 [package]
 name = "aoc-2025"
-version = "0.1.0"
+version = "0.1.9"
 edition = "2024"
+publish = false
 
 [dependencies]
+png_encode_mini = "0.1.2"
