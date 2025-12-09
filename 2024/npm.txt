@@ -1,0 +1,9 @@
+import {
+PriorityQueue,
+MinPriorityQueue,
+MaxPriorityQueue,
+PriorityQueueOptions, // queue options interface
+PriorityQueueItem // queue item interface for min/max queue
+} from '@datastructures-js/priority-queue';
+
+import { Deque } from '@datastructures-js/deque';
