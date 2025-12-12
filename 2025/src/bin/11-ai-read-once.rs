@@ -12,14 +12,17 @@ pub fn main() -> io::Result<()> {
 
 fn parts(input: &str) -> io::Result<()> {
     // Single allocation: read entire file as one String
-    let content = std::fs::read_to_string(Path::new("./data/").join(input).with_added_extension("in"))?;
+    let content =
+        std::fs::read_to_string(Path::new("./data/").join(input).with_added_extension("in"))?;
 
     let mut node_lines: Vec<(&str, Vec<&str>)> = Vec::new();
     let mut all_names_set: std::collections::HashSet<&str> = std::collections::HashSet::new();
     let mut all_names: Vec<&str> = Vec::new();
 
     for line in content.lines() {
-        if line.is_empty() { continue; }
+        if line.is_empty() {
+            continue;
+        }
         let node_name = &line[0..3];
         let neighbors: Vec<&str> = line[5..].split_whitespace().collect();
         if all_names_set.insert(node_name) {
@@ -106,7 +109,6 @@ fn kahn_algorithm(source: usize, sink: usize, neighbors: &[Vec<usize>]) -> u64 {
         }
     }
     assert_eq!(topo.len(), n, "Graph has a cycle! {} {}", topo.len(), n);
-
 
     let mut paths = vec![0u64; n];
     paths[source] = 1;

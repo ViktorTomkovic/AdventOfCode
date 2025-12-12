@@ -1,5 +1,5 @@
 use std::collections::{HashMap, VecDeque};
-use std::io::{self, Write};
+use std::io::{self, BufRead, Write};
 use std::path::Path;
 
 pub fn main() -> io::Result<()> {
@@ -11,59 +11,50 @@ pub fn main() -> io::Result<()> {
 }
 
 fn parts(input: &str) -> io::Result<()> {
-    // Single allocation: read entire file as one String
-    let content = std::fs::read_to_string(Path::new("./data/").join(input).with_added_extension("in"))?;
+    // One-pass streaming: only allocate Strings for new names
+    let path = Path::new("./data/").join(input).with_added_extension("in");
+    let file = std::fs::File::open(&path)?;
+    let reader = std::io::BufReader::new(file);
 
-    let mut node_lines: Vec<(&str, Vec<&str>)> = Vec::new();
-    let mut all_names_set: std::collections::HashSet<&str> = std::collections::HashSet::new();
-    let mut all_names: Vec<&str> = Vec::new();
+    let mut name_to_index: HashMap<String, usize> = HashMap::new();
+    let mut neighbors: Vec<Vec<usize>> = Vec::new();
 
-    for line in content.lines() {
-        if line.is_empty() { continue; }
-        let node_name = &line[0..3];
-        let neighbors: Vec<&str> = line[5..].split_whitespace().collect();
-        if all_names_set.insert(node_name) {
-            all_names.push(node_name);
-        }
-        for &n in &neighbors {
-            if all_names_set.insert(n) {
-                all_names.push(n);
+    let get_or_create_index =
+        |name: &str, map: &mut HashMap<String, usize>, graph: &mut Vec<Vec<usize>>| -> usize {
+            if let Some(&idx) = map.get(name) {
+                idx
+            } else {
+                let idx = map.len();
+                map.insert(name.to_string(), idx); // Only allocate String if new
+                graph.push(Vec::new()); // Add new adjacency list
+                idx
             }
+        };
+
+    for line in reader.lines() {
+        let line = line?;
+        if line.is_empty() {
+            continue;
         }
-        node_lines.push((node_name, neighbors));
-    }
-    for &special in &["you", "out"] {
-        if all_names_set.insert(special) {
-            all_names.push(special);
-        }
-    }
 
-    let mut name_to_index: HashMap<&str, usize> = HashMap::new();
-    for (i, &s) in all_names.iter().enumerate() {
-        name_to_index.insert(s, i);
-    }
-    let mut adjacency: HashMap<&str, Vec<&str>> = HashMap::new();
-    for &(node_name, ref neighbors) in &node_lines {
-        adjacency.insert(node_name, neighbors.clone());
-    }
-    for &special in &["you", "out"] {
-        adjacency.entry(special).or_insert_with(Vec::new);
-    }
-    println!("{}", all_names.len());
+        let node_name = &line[0..3];
+        let node_idx = get_or_create_index(node_name, &mut name_to_index, &mut neighbors);
 
-    let n = name_to_index.len();
-    let mut neighbors = vec![Vec::new(); n];
-
-    for (e, adj) in &adjacency {
-        let ei = name_to_index.get(e).unwrap();
-        for v in adj {
-            let vi = name_to_index.get(v).unwrap();
-            neighbors[*ei].push(*vi);
+        for neighbor in line[5..].split_whitespace() {
+            let neighbor_idx = get_or_create_index(neighbor, &mut name_to_index, &mut neighbors);
+            neighbors[node_idx].push(neighbor_idx);
         }
     }
 
-    let you = *name_to_index.get("you").unwrap();
-    let out = *name_to_index.get("out").unwrap();
+    // Ensure special nodes exist
+    for special in ["you", "out"] {
+        get_or_create_index(special, &mut name_to_index, &mut neighbors);
+    }
+
+    println!("{}", name_to_index.len());
+
+    let you = name_to_index["you"];
+    let out = name_to_index["out"];
     let paths_part1 = kahn_algorithm(you, out, &neighbors);
     println!("{paths_part1}");
     let svr = *name_to_index.get("svr").unwrap();
@@ -107,7 +98,6 @@ fn kahn_algorithm(source: usize, sink: usize, neighbors: &[Vec<usize>]) -> u64 {
     }
     assert_eq!(topo.len(), n, "Graph has a cycle! {} {}", topo.len(), n);
 
-
     let mut paths = vec![0u64; n];
     paths[source] = 1;
 
@@ -126,7 +116,11 @@ fn kahn_algorithm(source: usize, sink: usize, neighbors: &[Vec<usize>]) -> u64 {
 }
 
 #[allow(dead_code)]
-fn write_dot(input: &str, adjacency: &HashMap<&str, Vec<&str>>) -> io::Result<()> {
+fn write_dot(
+    input: &str,
+    name_to_index: &HashMap<String, usize>,
+    neighbors: &[Vec<usize>],
+) -> io::Result<()> {
     let dot_file = std::fs::File::create(
         Path::new("./output/")
             .join(input)
@@ -137,8 +131,19 @@ fn write_dot(input: &str, adjacency: &HashMap<&str, Vec<&str>>) -> io::Result<()
     writer.write_all(b"graph [fontname = \"DejaVu Sans Mono\"];\n")?;
     writer.write_all(b"node [fontname = \"DejaVu Sans Mono\"];\n")?;
     writer.write_all(b"edge [fontname = \"DejaVu Sans Mono\"];\n")?;
-    for (key, value) in adjacency.iter() {
-        writer.write_all(format!("{:?} -> {{ {} }}\n", *key, value.join(" ")).as_bytes())?;
+
+    // Create reverse index for lookups
+    let mut index_to_name: Vec<&str> = vec![""; name_to_index.len()];
+    for (name, &idx) in name_to_index {
+        index_to_name[idx] = name;
+    }
+
+    for (idx, adj) in neighbors.iter().enumerate() {
+        let node_name = index_to_name[idx];
+        let neighbor_names: Vec<&str> = adj.iter().map(|&i| index_to_name[i]).collect();
+        writer.write_all(
+            format!("{:?} -> {{ {} }}\n", node_name, neighbor_names.join(" ")).as_bytes(),
+        )?;
     }
     writer.write_all(b"\"you\"[style=filled color=green]\n")?;
     writer.write_all(b"\"out\"[style=filled color=red]\n")?;
