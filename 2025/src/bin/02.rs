@@ -49,8 +49,8 @@ fn sum_nice_numbers(from: u64, to: u64, p: &Part) -> u64 {
 
 fn is_nice(num: u64, p: &Part) -> bool {
     let binding = num.to_string();
-    let snum = binding.as_bytes();
-    let n = snum.len();
+    let number_bytes = binding.as_bytes();
+    let n = number_bytes.len();
     for pattern_length in 1..=(n / 2) {
         // println!("{pattern_length}");
         let pattern_repetitions = n / pattern_length;
@@ -61,20 +61,20 @@ fn is_nice(num: u64, p: &Part) -> bool {
         if matches!(p, Part::P1) && pattern_repetitions != 2 {
             continue
         }
-        if is_containing_pattern(snum, pattern_length, pattern_repetitions) {
+        if is_containing_pattern(number_bytes, pattern_length, pattern_repetitions) {
             return true;
         }
     }
     false
 }
 
-fn is_containing_pattern(snum: &[u8], pattern_length: usize, pattern_repetitions: usize) -> bool {
-    'not_nice: for j in 1..pattern_repetitions {
+fn is_containing_pattern(bytes: &[u8], pattern_length: usize, pattern_repetitions: usize) -> bool {
+    for j in 1..pattern_repetitions {
         for i in 0..pattern_length {
             let i1 = (j - 1) * pattern_length + i;
             let i2 = j * pattern_length + i;
             // println!("{i1} {i2}");
-            if snum[i1] != snum[i2] {
+            if bytes[i1] != bytes[i2] {
                 return false;
             }
         }

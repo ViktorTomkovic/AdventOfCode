@@ -4,7 +4,6 @@ use std::fs::File;
 use std::io::{self, BufRead};
 
 const WHITE: u32 = 0xffffffff;
-const BLACK: u32 = 0xff000000;
 const RED: u32 = 0xff0000ff;
 const BLUE: u32 = 0xffff0000;
 const GREEN: u32 = 0xff00ff00;
@@ -201,6 +200,7 @@ struct Image {
 }
 
 impl Image {
+    #[allow(dead_code)]
     pub fn new(height: u32, width: u32) -> Image {
         Image {
             height,

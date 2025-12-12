@@ -1,12 +1,5 @@
 use std::fs::File;
 use std::io::{self, BufRead};
-use std::ops::{Range, RangeBounds, RangeInclusive};
-
-#[derive(Debug)]
-enum Part {
-    P1,
-    P2,
-}
 pub fn main() -> io::Result<()> {
     let _ = part1();
     let _ = part2();
@@ -18,19 +11,19 @@ pub fn main() -> io::Result<()> {
 fn part1() -> io::Result<()> {
     let path_t = "./data/06a.in";
     let file = File::open(path_t)?;
-    let mut reader = io::BufReader::new(file);
+    let reader = io::BufReader::new(file);
 
     let mut sums = Vec::<u64>::new();
-    let mut mults = Vec::<u64>::new();
+    let mut multipliers = Vec::<u64>::new();
     let mut iterator = reader.lines();
     let first = iterator.next().unwrap()?;
     for token in first.split_whitespace() {
         let number: u64 = token.parse().expect("grg");
         sums.push(number);
-        mults.push(number);
+        multipliers.push(number);
     }
 
-    let mut megasum: u64 = 0;
+    let mut big_sum: u64 = 0;
     while let Some(line) = iterator.next() {
         let line = line?;
         if line.is_empty() {
@@ -40,29 +33,29 @@ fn part1() -> io::Result<()> {
         for (i, token) in tokens.enumerate() {
             match token {
                 "*" => {
-                    megasum += mults[i];
+                    big_sum += multipliers[i];
                 }
                 "+" => {
-                    megasum += sums[i];
+                    big_sum += sums[i];
                 }
                 str => {
                     let number: u64 = str.parse().expect("grgrg");
                     sums[i] += number;
-                    mults[i] *= number;
+                    multipliers[i] *= number;
                 }
             }
         }
     }
-    println!("{megasum}");
+    println!("{big_sum}");
     Ok(())
 }
 
 fn part2() -> io::Result<()> {
     let path_t = "./data/06a.in";
     let file = File::open(path_t)?;
-    let mut reader = io::BufReader::new(file);
+    let reader = io::BufReader::new(file);
 
-    let mut lines: Vec<Vec<u8>> = reader
+    let lines: Vec<Vec<u8>> = reader
         .lines()
         .map(|line| line.unwrap().into_bytes())
         .collect();
